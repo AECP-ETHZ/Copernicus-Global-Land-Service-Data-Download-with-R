@@ -16,7 +16,7 @@
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
 #
-#Auteur: Willemijn Vroege, ETH Zürich with support of Tim Jacobs, VITO, Copernicus Global Help Desk.
+#Author: Willemijn Vroege, AECP, ETH Zürich with support of Tim Jacobs, VITO, Copernicus Global Help Desk.
 #E-mail: wvroege@ethz.ch
 #
 #
