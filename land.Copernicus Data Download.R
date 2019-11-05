@@ -9,7 +9,7 @@
 #These functinos allow to download the data without ordering products first,
 #but you need to register at https://land.copernicus.eu/global/ and create a username and password. 
 #
-#Set your path, username, password, timeframe, variable, resoltion and if more than 1 version exists, version number. New products are created regularly.
+#Set your path, username, password, timeframe, variable, resolution and if more than 1 version exists, version number. New products are created regularly.
 #
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
@@ -19,7 +19,7 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 01.11.2019
+#Last update  : 05.11.2019
 #
 ###########################################################################################################################
 
