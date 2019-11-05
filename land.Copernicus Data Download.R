@@ -36,9 +36,9 @@ rm(list=ls())
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
 #check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
 
-PATH       <- "D:/land.copernicus" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
-USERNAME   <- "willemijnvroege" #INSERT USERNAME
-PASSWORD   <- "SatImagesCop" #INSERT PASSWORD
+PATH       <- "" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
+USERNAME   <- "" #INSERT USERNAME
+PASSWORD   <- "" #INSERT PASSWORD
 TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
 VARIABLE   <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ssm, swi, lst, ...
 RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
