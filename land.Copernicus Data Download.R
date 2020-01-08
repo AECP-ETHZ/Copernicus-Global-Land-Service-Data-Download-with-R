@@ -38,7 +38,7 @@ rm(list=ls())
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
 #check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
 
-PATH       <- "" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
+PATH       <- "D:/land.copernicus" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
 USERNAME   <- "" #INSERT USERNAME
 PASSWORD   <- "" #INSERT PASSWORD
 TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
@@ -54,26 +54,27 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
 
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
-  if (length(url)==0) {print("This product is not available or the product name is misspecified")}
 
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
   file.url <- unlist(strsplit(file.url, "\n"))
   file.url <- paste0("https://", paste(username, password, sep=":"), "@", sub(".*//", "",file.url))
 
-  setwd(path)
-  dir.create(collection)
-  setwd(paste(path, collection, sep="/"))
+  if (grepl("The page you tried to access does not exist", file.url[10])) {print("Error: This product/version is not available or the product/version name is misspecified, check https://land.copernicus.vgt.vito.be/manifest/ to check for current product availabilities")}
+  else{
+    setwd(path)
+    dir.create(collection)
+    setwd(paste(path, collection, sep="/"))
   
-  for (i in 1:length(timeframe)){
-    temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
-    if (length(temp) > 0 ){ #if there is data for this day
-      if (i>1){Sys.sleep(3)}
-      download.file(temp, paste(collection, sub(".*/", "", temp), sep="_"), mode = 'wb')   #download function
-      print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
-    }
+    for (i in 1:length(timeframe)){
+     temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
+      if (length(temp) > 0 ){ #if there is data for this day
+        if (i>1){Sys.sleep(3)}
+        download.file(temp, paste(collection, sub(".*/", "", temp), sep="_"), mode = 'wb')   #download function
+        print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
+        }
+     }
+    }  
   }
-}  
-
 download.copernicus.data(path=PATH, username=USERNAME, password=PASSWORD, timeframe=TIMEFRAME, variable=VARIABLE, resolution=RESOLUTION, version=VERSION)
 
 
