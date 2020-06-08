@@ -19,30 +19,26 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 05.11.2019
+#Last update  : 08.06.2020
 #
 ###########################################################################################################################
 
-#install.packages("RCurl")
-#install.packages("ncdf4")
-#install.packages("raster")
 
-library(RCurl)
-library(ncdf4)
-library(raster)
-rm(list=ls())
+if(require(RCurl) == FALSE){install.packages("RCurl", repos = "https://cloud.r-project.org"); library(RCurl)} else {library(RCurl)}
+if(require(ncdf4) == FALSE){install.packages("ncdf4", repos = "https://cloud.r-project.org"); library(ncdf4)} else {library(ncdf4)}
+if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r-project.org"); library(raster)} else {library(raster)}
+#rm(list=ls())
 
-#SET TARGET DIRECTORY USERNAME, PASSWORD, TIMEFRAME OF YOUR INTEREST AND PRODUCT (constising of a variable, resolution and version). 
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
 #check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
 
-PATH       <- "" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
-USERNAME   <- "" #INSERT USERNAME
-PASSWORD   <- "" #INSERT PASSWORD
-TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
-VARIABLE   <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ssm, swi, lst, ...
-RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
-VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",... 
+#PATH       : TARGET DIRECTORY, for example: D:/land.copernicus
+#USERNAME   : USERNAME
+#PASSWORD   : PASSWORD
+#TIMEFRAME  : TIMEFRAME OF INTEREST, for example June 2019
+#VARIABLE   : PRODUCT VARIABLE; CHOSE FROM fapar, fcover, lai, ndvi, ssm, swi, lst...
+#RESOLUTION : RESOLTION; CHOSE FROM  1km, 300m or 100m
+#VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"... 
 
 
 download.copernicus.data <- function(path, username, password, timeframe, variable, resolution, version){
@@ -72,17 +68,9 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
   }
 }  
 
-download.copernicus.data(path=PATH, username=USERNAME, password=PASSWORD, timeframe=TIMEFRAME, variable=VARIABLE, resolution=RESOLUTION, version=VERSION)
 
 
-####Open the downloaded data in R### 
-#SELECT THE DATA YOU WANT TO OPEN (data has to be downloaded first)
 
-PATH       <- "D:/land.copernicus" #INSERT DIRECTORY, for example: D:/land.copernicus
-TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
-VARIABLE   <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ss, swi, lst, ...
-RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
-VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",... 
 
 
 read.copernicus.data <- function(path, timeframe, variable, resolution, version){
@@ -94,8 +82,3 @@ read.copernicus.data <- function(path, timeframe, variable, resolution, version)
   filenames.in.timeframe <- paste(PATH, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
   data <- stack(filenames.in.timeframe)  
 }
-
-data <- read.copernicus.data(path=PATH,timeframe=TIMEFRAME, variable=VARIABLE, resolution=RESOLUTION, version=VERSION)
-
-#view first layer of the data
-plot(data[[1]])
