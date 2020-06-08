@@ -80,11 +80,17 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
 
 
 read.copernicus.data <- function(path, timeframe, variable, resolution, version){
-  collection <- paste(variable, version, resolution, sep="_")
-  setwd(PATH)
-  all.filenames.product  <- list.files(pattern=(collection), recursive = T)
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    variable <- paste0(variable, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  collection <- paste(variable, version, resolution1, sep="_")
+  setwd(path)
+  all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
   datepattern   <- gsub("-", "", timeframe)
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
-  filenames.in.timeframe <- paste(PATH, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
+  filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
   data <- stack(filenames.in.timeframe)  
 }
