@@ -43,19 +43,27 @@ if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r
 
 download.copernicus.data <- function(path, username, password, timeframe, variable, resolution, version){
   
-  collection <- paste(variable, version, resolution, sep="_")
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    variable <- paste0(variable, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  
+  collection <- paste(variable, version, resolution1, sep="_")
   
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
-
+  
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
-  if (length(url)==0) {print("This product is not available or the product name is misspecified")}
-
+  #if (length(url)==0) {print("This product is not available or the product name is misspecified")}
+  
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
   file.url <- unlist(strsplit(file.url, "\n"))
   file.url <- paste0("https://", paste(username, password, sep=":"), "@", sub(".*//", "",file.url))
-
+  if(grepl("does not exist", file.url[10])) stop("This product is not available or the product name is misspecified")
+  
   setwd(path)
-  dir.create(collection)
+  if(!dir.exists(collection)) dir.create(collection)
   setwd(paste(path, collection, sep="/"))
   
   for (i in 1:length(timeframe)){
@@ -67,8 +75,6 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
     }
   }
 }  
-
-
 
 
 
