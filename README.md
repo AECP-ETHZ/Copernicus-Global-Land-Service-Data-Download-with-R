@@ -5,6 +5,7 @@
 #COPERNICUS DATA DOWNLOAD AND READ
 #
 #These functions allow to automatically download data provided by the Copernicus Global Land Service and open this data as rasterstack in R.
+#Additionally, there is an example on how to run the functions found in 'land.Copernicus Data Download.R'
 #See: https://land.copernicus.eu/global/
 #
 #These functions rely on the data provided in the data manifest of the Copernicus service.
@@ -21,7 +22,7 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 01.11.2019
+#Last update  : 10.08.2020
 #
 ##########################################################################################
 
