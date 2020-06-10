@@ -10,6 +10,8 @@
 #but you need to register at https://land.copernicus.eu/global/ and create a username and password. 
 #
 #Set your path, username, password, timeframe, variable, resolution and if more than 1 version exists, version number. New products are created regularly.
+#For the most recent product availabilities at the Copernicus data manifest check: https://land.copernicus.vgt.vito.be/manifest/
+#
 #
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
@@ -55,6 +57,7 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
   
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
+
   #if (length(url)==0) {print("This product is not available or the product name is misspecified")}
   
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
@@ -65,14 +68,17 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
   setwd(path)
   if(!dir.exists(collection)) dir.create(collection)
   setwd(paste(path, collection, sep="/"))
+
   
-  for (i in 1:length(timeframe)){
-    temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
-    if (length(temp) > 0 ){ #if there is data for this day
-      if (i>1){Sys.sleep(3)}
-      download.file(temp, paste(collection, sub(".*/", "", temp), sep="_"), mode = 'wb')   #download function
-      print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
-    }
+    for (i in 1:length(timeframe)){
+     temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
+      if (length(temp) > 0 ){ #if there is data for this day
+        if (i>1){Sys.sleep(3)}
+        download.file(temp, paste(collection, sub(".*/", "", temp), sep="_"), mode = 'wb')   #download function
+        print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
+        }
+     }
+    }  
   }
 }  
 
