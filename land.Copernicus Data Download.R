@@ -7,7 +7,7 @@
 #
 #These functions rely on the data provided in the data manifest of the Copernicus service.
 #These functinos allow to download the data without ordering products first,
-#but you need to register at https://land.copernicus.eu/global/ and create a username and password. 
+#but you need to register at https://land.copernicus.eu/global/ and create a username and password.
 #
 #Set your path, username, password, timeframe, product, resolution and if more than 1 version exists, version number. New products are created regularly.
 #For the most recent product availabilities at the Copernicus data manifest check: https://land.copernicus.vgt.vito.be/manifest/
@@ -32,7 +32,7 @@ if(require(ncdf4) == FALSE){install.packages("ncdf4", repos = "https://cloud.r-p
 if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r-project.org"); library(raster)} else {library(raster)}
 
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
-#check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
+#check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest
 
 #PATH       : TARGET DIRECTORY, for example: D:/land.copernicus
 #USERNAME   : USERNAME
@@ -40,36 +40,36 @@ if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r
 #TIMEFRAME  : TIMEFRAME OF INTEREST, for example June 2019
 #PRODUCT    : PRODUCT VARIABLE; CHOSE FROM fapar, fcover, lai, ndvi, ssm, swi, lst...
 #RESOLUTION : RESOLTION; CHOSE FROM  1km, 300m or 100m
-#VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"... 
+#VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"...
 
 
 download.copernicus.data <- function(path, username, password, timeframe, product, resolution, version){
-  
+
   if(resolution == "300m"){
     resolution1 <- "333m"
     product <- paste0(product, "300")
   }else if(resolution == "1km"){
     resolution1 <- resolution
   }
-  
+
   collection <- paste(product, version, resolution1, sep="_")
-  
+
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
-  
+
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
 
   #if (length(url)==0) {print("This product is not available or the product name is misspecified")}
-  
+
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
   file.url <- unlist(strsplit(file.url, "\n"))
   file.url <- paste0("https://", paste(username, password, sep=":"), "@", sub(".*//", "",file.url))
   if(grepl("does not exist", file.url[10])) stop("This product is not available or the product name is misspecified")
-  
+
   setwd(path)
   if(!dir.exists(collection)) dir.create(collection)
   setwd(paste(path, collection, sep="/"))
 
-  
+
     for (i in 1:length(timeframe)){
      temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
       if (length(temp) > 0 ){ #if there is data for this day
@@ -78,9 +78,9 @@ download.copernicus.data <- function(path, username, password, timeframe, produc
         print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
       }
     }
-}  
+}
 
-read.copernicus.data_single.netCDF <- function(path, date, product, resolution, version){
+nc_open.copernicus.data <- function(path, date, product, resolution, version){
   if(resolution == "300m"){
     resolution1 <- "333m"
     product <- paste0(product, "300")
@@ -91,10 +91,10 @@ read.copernicus.data_single.netCDF <- function(path, date, product, resolution, 
   setwd(path)
   all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
   specific.filename<-grep(gsub("-","",date), all.filenames.product, value = T)
-  nc_data <- nc_open(specific.filename)  
+  nc_data <- nc_open(specific.filename)
 }
 
-read.copernicus.data_stack.all.files.of.timeframe <- function(path, timeframe, product, resolution, version, variable){
+stack.copernicus.data <- function(path, timeframe, product, resolution, version, variable){
   if(resolution == "300m"){
     resolution1 <- "333m"
     product <- paste0(product, "300")
@@ -107,5 +107,5 @@ read.copernicus.data_stack.all.files.of.timeframe <- function(path, timeframe, p
   datepattern   <- gsub("-", "", timeframe)
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
   filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
-  data <- stack(filenames.in.timeframe, varname=variable)  
+  data <- stack(filenames.in.timeframe, varname=variable)
 }
