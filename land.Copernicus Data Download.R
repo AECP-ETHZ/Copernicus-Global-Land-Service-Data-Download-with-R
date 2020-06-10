@@ -2,26 +2,27 @@
 #
 #COPERNICUS DATA DOWNLOAD AND READ
 #
-#These functions allow to automatically download data provided by the Copernicus Global Land Service and open this data as rasterstack in R.
+#These functions allow to automatically download data provided by the Copernicus Global Land Service and open this data in R.
 #See: https://land.copernicus.eu/global/
 #
 #These functions rely on the data provided in the data manifest of the Copernicus service.
 #These functinos allow to download the data without ordering products first,
 #but you need to register at https://land.copernicus.eu/global/ and create a username and password. 
 #
-#Set your path, username, password, timeframe, variable, resolution and if more than 1 version exists, version number. New products are created regularly.
+#Set your path, username, password, timeframe, product, resolution and if more than 1 version exists, version number. New products are created regularly.
 #For the most recent product availabilities at the Copernicus data manifest check: https://land.copernicus.vgt.vito.be/manifest/
 #
 #
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
 #
-#Author: Willemijn Vroege, ETH Zürich with support of Tim Jacobs, VITO, Copernicus Global Help Desk.
+#Author: Willemijn Vroege, ETH Zurich.
 #E-mail: wvroege@ethz.ch
+#Acknowlegdments: Many thanks to Tim Jacobs, VITO, Copernicus Global Help Desk and Xavier Rotllan Puig, Aster Projects for constructive feedback.
 #
 #
 #First version: 28.10.2019
-#Last update  : 08.06.2020
+#Last update  : 10.06.2020
 #
 ###########################################################################################################################
 
@@ -29,7 +30,6 @@
 if(require(RCurl) == FALSE){install.packages("RCurl", repos = "https://cloud.r-project.org"); library(RCurl)} else {library(RCurl)}
 if(require(ncdf4) == FALSE){install.packages("ncdf4", repos = "https://cloud.r-project.org"); library(ncdf4)} else {library(ncdf4)}
 if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r-project.org"); library(raster)} else {library(raster)}
-#rm(list=ls())
 
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
 #check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
@@ -38,21 +38,21 @@ if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r
 #USERNAME   : USERNAME
 #PASSWORD   : PASSWORD
 #TIMEFRAME  : TIMEFRAME OF INTEREST, for example June 2019
-#VARIABLE   : PRODUCT VARIABLE; CHOSE FROM fapar, fcover, lai, ndvi, ssm, swi, lst...
+#PRODUCT    : PRODUCT VARIABLE; CHOSE FROM fapar, fcover, lai, ndvi, ssm, swi, lst...
 #RESOLUTION : RESOLTION; CHOSE FROM  1km, 300m or 100m
 #VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"... 
 
 
-download.copernicus.data <- function(path, username, password, timeframe, variable, resolution, version){
+download.copernicus.data <- function(path, username, password, timeframe, product, resolution, version){
   
   if(resolution == "300m"){
     resolution1 <- "333m"
-    variable <- paste0(variable, "300")
+    product <- paste0(product, "300")
   }else if(resolution == "1km"){
     resolution1 <- resolution
   }
   
-  collection <- paste(variable, version, resolution1, sep="_")
+  collection <- paste(product, version, resolution1, sep="_")
   
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
   
@@ -76,27 +76,36 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
         if (i>1){Sys.sleep(3)}
         download.file(temp, paste(collection, sub(".*/", "", temp), sep="_"), mode = 'wb')   #download function
         print(paste0(collection, "_", sub(".*/", "", temp), " is saved in ", getwd()))
-        }
-     }
-    }  
-  }
+      }
+    }
 }  
 
-
-
-
-read.copernicus.data <- function(path, timeframe, variable, resolution, version){
+read.copernicus.data_single.netCDF <- function(path, date, product, resolution, version){
   if(resolution == "300m"){
     resolution1 <- "333m"
-    variable <- paste0(variable, "300")
+    product <- paste0(product, "300")
   }else if(resolution == "1km"){
     resolution1 <- resolution
   }
-  collection <- paste(variable, version, resolution1, sep="_")
+  collection <- paste(product, version, resolution1, sep="_")
+  setwd(path)
+  all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
+  specific.filename<-grep(gsub("-","",date), all.filenames.product, value = T)
+  nc_data <- nc_open(specific.filename)  
+}
+
+read.copernicus.data_stack.all.files.of.timeframe <- function(path, timeframe, product, resolution, version, variable){
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    product <- paste0(product, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  collection <- paste(product, version, resolution1, sep="_")
   setwd(path)
   all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
   datepattern   <- gsub("-", "", timeframe)
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
   filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
-  data <- stack(filenames.in.timeframe)  
+  data <- stack(filenames.in.timeframe, varname=variable)  
 }
