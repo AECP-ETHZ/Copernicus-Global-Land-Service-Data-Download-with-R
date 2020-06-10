@@ -21,49 +21,54 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 08.01.2020
+#Last update  : 08.06.2020
 #
 ###########################################################################################################################
 
-#install.packages("RCurl")
-#install.packages("ncdf4")
-#install.packages("raster")
 
-library(RCurl)
-library(ncdf4)
-library(raster)
-rm(list=ls())
+if(require(RCurl) == FALSE){install.packages("RCurl", repos = "https://cloud.r-project.org"); library(RCurl)} else {library(RCurl)}
+if(require(ncdf4) == FALSE){install.packages("ncdf4", repos = "https://cloud.r-project.org"); library(ncdf4)} else {library(ncdf4)}
+if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r-project.org"); library(raster)} else {library(raster)}
+#rm(list=ls())
 
-#SET TARGET DIRECTORY USERNAME, PASSWORD, TIMEFRAME OF YOUR INTEREST AND PRODUCT (constising of a variable, resolution and version). 
 #Check https://land.copernicus.eu/global/products/ for a product overview and product details
 #check https://land.copernicus.vgt.vito.be/manifest/ for an overview for data availability in the manifest 
 
-PATH       <- "D:/land.copernicus" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
-USERNAME   <- "" #INSERT USERNAME
-PASSWORD   <- "" #INSERT PASSWORD
-TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
-VARIABLE   <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ssm, swi, lst, ...
-RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
-VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",... 
+#PATH       : TARGET DIRECTORY, for example: D:/land.copernicus
+#USERNAME   : USERNAME
+#PASSWORD   : PASSWORD
+#TIMEFRAME  : TIMEFRAME OF INTEREST, for example June 2019
+#VARIABLE   : PRODUCT VARIABLE; CHOSE FROM fapar, fcover, lai, ndvi, ssm, swi, lst...
+#RESOLUTION : RESOLTION; CHOSE FROM  1km, 300m or 100m
+#VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"... 
 
 
 download.copernicus.data <- function(path, username, password, timeframe, variable, resolution, version){
   
-  collection <- paste(variable, version, resolution, sep="_")
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    variable <- paste0(variable, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  
+  collection <- paste(variable, version, resolution1, sep="_")
   
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
-
+  
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
 
+  #if (length(url)==0) {print("This product is not available or the product name is misspecified")}
+  
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
   file.url <- unlist(strsplit(file.url, "\n"))
   file.url <- paste0("https://", paste(username, password, sep=":"), "@", sub(".*//", "",file.url))
+  if(grepl("does not exist", file.url[10])) stop("This product is not available or the product name is misspecified")
+  
+  setwd(path)
+  if(!dir.exists(collection)) dir.create(collection)
+  setwd(paste(path, collection, sep="/"))
 
-  if (grepl("The page you tried to access does not exist", file.url[10])) {print("Error: This product/version is not available or the product/version name is misspecified, check https://land.copernicus.vgt.vito.be/manifest/ to check for current product availabilities")}
-  else{
-    setwd(path)
-    dir.create(collection)
-    setwd(paste(path, collection, sep="/"))
   
     for (i in 1:length(timeframe)){
      temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
@@ -75,30 +80,23 @@ download.copernicus.data <- function(path, username, password, timeframe, variab
      }
     }  
   }
-download.copernicus.data(path=PATH, username=USERNAME, password=PASSWORD, timeframe=TIMEFRAME, variable=VARIABLE, resolution=RESOLUTION, version=VERSION)
+}  
 
 
-####Open the downloaded data in R### 
-#SELECT THE DATA YOU WANT TO OPEN (data has to be downloaded first)
-
-PATH       <- "D:/land.copernicus" #INSERT DIRECTORY, for example: D:/land.copernicus
-TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
-VARIABLE   <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ss, swi, lst, ...
-RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
-VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",... 
 
 
 read.copernicus.data <- function(path, timeframe, variable, resolution, version){
-  collection <- paste(variable, version, resolution, sep="_")
-  setwd(PATH)
-  all.filenames.product  <- list.files(pattern=(collection), recursive = T)
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    variable <- paste0(variable, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  collection <- paste(variable, version, resolution1, sep="_")
+  setwd(path)
+  all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
   datepattern   <- gsub("-", "", timeframe)
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
-  filenames.in.timeframe <- paste(PATH, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
+  filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
   data <- stack(filenames.in.timeframe)  
 }
-
-data <- read.copernicus.data(path=PATH,timeframe=TIMEFRAME, variable=VARIABLE, resolution=RESOLUTION, version=VERSION)
-
-#view first layer of the data
-plot(data[[1]])
