@@ -12,6 +12,8 @@
 #Set your path, username, password, timeframe, product, resolution and if more than 1 version exists, version number. New products are created regularly.
 #For the most recent product availabilities at the Copernicus data manifest check: https://land.copernicus.vgt.vito.be/manifest/
 #
+#Be aware that Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner:  nc_open.CGLS.data opens the orginal data without adjusting
+#coordinates, while ncvar_get_CGSL.data and stack.CGLS.data open the data and adjust the coordinates.
 #
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
@@ -107,16 +109,16 @@ ncvar_get_CGSL.data <- function(path, date, product, resolution, version, variab
   nc  <- nc_open(specific.filename)
   lon <- ncvar_get(nc, "lon")
   lat <- ncvar_get(nc, "lat")
-  time <- ncvar_get(nc, "time") 
-  
+  time <- ncvar_get(nc, "time")
+
   #Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner --> adjust coordinates!
   if(resolution == "300m"){
     lon <- lon - (1/336)/2
-    lat <- lat + (1/336)/2 
-  } 
+    lat <- lat + (1/336)/2
+  }
   if(resolution == "1km"){
     lon <- lon - (1/112)/2
-    lat <- lat + (1/112)/2 
+    lat <- lat + (1/112)/2
   }
   nc_data <- ncvar_get(nc, variable)
 }
@@ -135,7 +137,7 @@ stack.CGLS.data <- function(path, timeframe, product, resolution, version, varia
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
   filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
   options(warn=-1)
-  data <- stack(filenames.in.timeframe, varname=variable, quick=T) #this produces a warning because the projection gets off as R reads the coordinates as left upper corner. This is corrected below. 
+  data <- stack(filenames.in.timeframe, varname=variable, quick=T) #this produces a warning because the projection gets off as R reads the coordinates as left upper corner. This is corrected below.
   options(warn=0)
   extent(data) <- extent(c(-180, 180, -60, 80))
   proj4string(data) <- CRS("+init=epsg:4326")
