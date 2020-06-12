@@ -1,6 +1,6 @@
 ############################################################################################################################
 #
-#COPERNICUS DATA DOWNLOAD AND READ: EXAMPLE
+#COPERNICUS GLOBAL LAND SERVICE (CGLS) DATA DOWNLOAD AND READ: EXAMPLE
 #
 #This is an example on how to run the functions found in 'land.Copernicus Data Download.R'
 #
@@ -13,6 +13,9 @@
 #
 #Set your path, username, password, timeframe, product, resolution and if more than 1 version exists, version number. New products are created regularly.
 #
+#Be aware that Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner:  nc_open.CGLS.data opens the orginal data without adjusting 
+#coordinates, while ncvar_get_CGSL.data and stack.CGLS.data open the data and adjust the coordinates.
+#
 #These functions are distributed in the hope that they will be useful,
 #but without any warranty.
 #
@@ -22,7 +25,7 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 10.06.2020
+#Last update  : 12.06.2020
 #
 ###########################################################################################################################
 
@@ -41,24 +44,30 @@ PATH       <- "" #INSERT TARGET DIRECTORY, for example: D:/land.copernicus
 USERNAME   <- "" #INSERT USERNAME
 PASSWORD   <- "" #INSERT PASSWORD
 TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSERT TIMEFRAME OF INTEREST, for example June 2019
-PRODUCT    <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ssm, swi, lst, ...
+PRODUCT    <- "fapar" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ssm, swi, lst, ...
 RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
 VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",...
 
+download.CGLS.data(path=PATH, username=USERNAME, password=PASSWORD, timeframe=TIMEFRAME, product=PRODUCT, resolution=RESOLUTION, version=VERSION)
 
-download.copernicus.data(path=PATH, username=USERNAME, password=PASSWORD, timeframe=TIMEFRAME, product=PRODUCT, resolution=RESOLUTION, version=VERSION)
 
-
-## Reading Single netCDF File ####
+## Reading Single netCDF File #### 
+#This function is to open and explore a nc file. Be aware that Copernicus nc files have lat/long belonging to the centre of the pixel, 
+#and R uses upper/left corner --> therefore adjust coordinates with ncvar_get_CGSL.data before using the netCDF file further!
 #SET TARGET DIRECTORY, TIMEFRAME OF YOUR INTEREST AND PRODUCT (constising of a product, resolution and version).
 
 PATH       <- "D:/land.copernicus" #INSERT DIRECTORY, for example: D:/land.copernicus
 DATE       <- "2019-06-13" #INSERT DATE OF INTEREST, for example June 13 2019
-PRODUCT    <- "ssm" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ss, swi, lst, ...
+PRODUCT    <- "fapar" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ss, swi, lst, ...
 RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
 VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",...
+VARIABLE   <- "FAPAR" #INSERT VARIABLE NAME, for example: FAPAR, FAPAR_ERR, FAPAR_QFLAG, LMK, NMOD, ssm, ssm_noise, ... . -->Go to the product site e.g. https://land.copernicus.eu/global/products/ssm) and check for available variable names under the tap 'techinal'
 
-nc_data <- nc_open.copernicus.data(path=PATH,date=DATE, product=PRODUCT, resolution=RESOLUTION, version=VERSION)
+#just explore
+nc      <- nc_open.CGLS.data   (path=PATH,date=DATE, product=PRODUCT, resolution=RESOLUTION, version=VERSION)
+
+#get data of a specific variable (with adjusted coordinates)
+nc_data <- ncvar_get_CGSL.data (path=PATH,date=DATE, product=PRODUCT, resolution=RESOLUTION, version=VERSION, variable=VARIABLE)
 
 
 ## Reading all Files within a Timeframe as Raster Stack####
@@ -69,7 +78,7 @@ TIMEFRAME  <- seq(as.Date("2019-06-01"), as.Date("2019-06-15"), by="days") #INSE
 PRODUCT    <- "fapar" #INSERT PRODUCT VARIABLE;(for example fapar) -> CHOSE FROM fapar, fcover, lai, ndvi,  ss, swi, lst, ...
 RESOLUTION <- "1km" #INSERT RESOLTION (1km, 300m or 100m)
 VERSION    <- "v1" #"INSERT VERSION: "v1", "v2", "v3",...
-VARIABLE   <- "FAPAR" #INSERT VARIABLE NAME, for example: FAPAR, FAPAR_ERR, FAPAR_QFLAG, LMK, NMOD, ...
+VARIABLE   <- "FAPAR" #INSERT VARIABLE NAME, for example: FAPAR, FAPAR_ERR, FAPAR_QFLAG, LMK, NMOD, ssm, ssm_noise, ... . -->Go to the product site e.g. https://land.copernicus.eu/global/products/ssm) and check for available variable names under the tap 'techinal'
 
-data   <- stack.copernicus.data(path=PATH,timeframe=TIMEFRAME, product=PRODUCT, resolution=RESOLUTION, version=VERSION, variable=VARIABLE)
+data   <- stack.CGLS.data(path=PATH,timeframe=TIMEFRAME, product=PRODUCT, resolution=RESOLUTION, version=VERSION, variable=VARIABLE)
 

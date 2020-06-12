@@ -1,6 +1,6 @@
 ############################################################################################################################
 #
-#COPERNICUS DATA DOWNLOAD AND READ
+#COPERNICUS GLOBAL LAND SERVICE (CGLS) DATA DOWNLOAD AND READ
 #
 #These functions allow to automatically download data provided by the Copernicus Global Land Service and open this data in R.
 #See: https://land.copernicus.eu/global/
@@ -22,7 +22,7 @@
 #
 #
 #First version: 28.10.2019
-#Last update  : 10.06.2020
+#Last update  : 12.06.2020
 #
 ###########################################################################################################################
 
@@ -43,7 +43,7 @@ if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r
 #VERSION    : VERSION; CHOSE FROM "v1", "v2", "v3"...
 
 
-download.copernicus.data <- function(path, username, password, timeframe, product, resolution, version){
+download.CGLS.data <- function(path, username, password, timeframe, product, resolution, version){
 
   if(resolution == "300m"){
     resolution1 <- "333m"
@@ -69,7 +69,6 @@ download.copernicus.data <- function(path, username, password, timeframe, produc
   if(!dir.exists(collection)) dir.create(collection)
   setwd(paste(path, collection, sep="/"))
 
-
     for (i in 1:length(timeframe)){
      temp <- grep(gsub("-", "", timeframe[[i]]),file.url, fixed=T, value=T) #select a file for each day
       if (length(temp) > 0 ){ #if there is data for this day
@@ -80,7 +79,7 @@ download.copernicus.data <- function(path, username, password, timeframe, produc
     }
 }
 
-nc_open.copernicus.data <- function(path, date, product, resolution, version){
+nc_open.CGLS.data <- function(path, date, product, resolution, version){
   if(resolution == "300m"){
     resolution1 <- "333m"
     product <- paste0(product, "300")
@@ -91,10 +90,38 @@ nc_open.copernicus.data <- function(path, date, product, resolution, version){
   setwd(path)
   all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
   specific.filename<-grep(gsub("-","",date), all.filenames.product, value = T)
-  nc_data <- nc_open(specific.filename)
+  nc  <- nc_open(specific.filename)
 }
 
-stack.copernicus.data <- function(path, timeframe, product, resolution, version, variable){
+ncvar_get_CGSL.data <- function(path, date, product, resolution, version, variable){
+  if(resolution == "300m"){
+    resolution1 <- "333m"
+    product <- paste0(product, "300")
+  }else if(resolution == "1km"){
+    resolution1 <- resolution
+  }
+  collection <- paste(product, version, resolution1, sep="_")
+  setwd(path)
+  all.filenames.product  <- list.files(pattern=(collection), recursive = TRUE)
+  specific.filename<-grep(gsub("-","",date), all.filenames.product, value = T)
+  nc  <- nc_open(specific.filename)
+  lon <- ncvar_get(nc, "lon")
+  lat <- ncvar_get(nc, "lat")
+  time <- ncvar_get(nc, "time") 
+  
+  #Copernicus nc files have lat/long belonging to the centre of the pixel, and R uses upper/left corner --> adjust coordinates!
+  if(resolution == "300m"){
+    lon <- lon - (1/336)/2
+    lat <- lat + (1/336)/2 
+  } 
+  if(resolution == "1km"){
+    lon <- lon - (1/112)/2
+    lat <- lat + (1/112)/2 
+  }
+  nc_data <- ncvar_get(nc, variable)
+}
+
+stack.CGLS.data <- function(path, timeframe, product, resolution, version, variable){
   if(resolution == "300m"){
     resolution1 <- "333m"
     product <- paste0(product, "300")
@@ -107,5 +134,10 @@ stack.copernicus.data <- function(path, timeframe, product, resolution, version,
   datepattern   <- gsub("-", "", timeframe)
   datepattern.in.timeframe <- names(unlist(sapply(datepattern, grep, all.filenames.product)))
   filenames.in.timeframe <- paste(path, all.filenames.product[unlist(sapply(datepattern, grep, all.filenames.product))], sep="/")
-  data <- stack(filenames.in.timeframe, varname=variable)
+  options(warn=-1)
+  data <- stack(filenames.in.timeframe, varname=variable, quick=T) #this produces a warning because the projection gets off as R reads the coordinates as left upper corner. This is corrected below. 
+  options(warn=0)
+  extent(data) <- extent(c(-180, 180, -60, 80))
+  proj4string(data) <- CRS("+init=epsg:4326")
+  data<-data
 }
