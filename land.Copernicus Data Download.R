@@ -28,7 +28,6 @@
 #
 ###########################################################################################################################
 
-
 if(require(RCurl) == FALSE){install.packages("RCurl", repos = "https://cloud.r-project.org"); library(RCurl)} else {library(RCurl)}
 if(require(ncdf4) == FALSE){install.packages("ncdf4", repos = "https://cloud.r-project.org"); library(ncdf4)} else {library(ncdf4)}
 if(require(raster) == FALSE){install.packages("raster", repos = "https://cloud.r-project.org"); library(raster)} else {library(raster)}
@@ -59,8 +58,6 @@ download.CGLS.data <- function(path, username, password, timeframe, product, res
   product.link<- paste0("@land.copernicus.vgt.vito.be/manifest/", collection, "/manifest_cgls_", collection, "_latest.txt" )
 
   url <- paste0("https://", paste(username, password, sep=":"), product.link)
-
-  #if (length(url)==0) {print("This product is not available or the product name is misspecified")}
 
   file.url <- getURL(url, ftp.use.epsv = FALSE, dirlistonly = TRUE, crlf = TRUE)
   file.url <- unlist(strsplit(file.url, "\n"))
